@@ -15,3 +15,7 @@ variable "availability_zones" {
   type        = list(string)
   default     = ["eu-north-1a", "eu-north-1b"]
 }
+variable "cluster_name" {
+  description = "Name of the Kubernetes cluster"
+  type        = string
+}
