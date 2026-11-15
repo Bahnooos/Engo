@@ -22,3 +22,12 @@ module "eks" {
   cluster_public_access_cidrs = var.cluster_public_access_cidrs
 
 }
+
+module "rds" {
+  source = "./modules/rds"
+  project_name = var.project_name
+  environment  = var.environment
+  vpc_id             = module.networking.vpc_id
+  private_subnet_ids = module.networking.private_subnet_ids
+  eks_security_group_id = module.eks.cluster_security_group_id
+}

@@ -1,0 +1,13 @@
+**/.git
+**/.vs
+**/bin
+**/obj
+**/.terraform
+**/terraform.tfstate*
+**/*.tfvars
+**/secrets/
+**/*.sql
+**/.env
+**/.env.*
+**/node_modules
+**/TestResults

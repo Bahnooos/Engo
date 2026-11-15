@@ -1,3 +1,4 @@
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -15,10 +16,16 @@ spec:
         app: engli3m-api
     spec:
       containers:
-      - name: engli3m-api
-        image: 380794909589.dkr.ecr.eu-north-1.amazonaws.com/engli3m-api:v1
-        ports:
-        - containerPort: 8000
-          name: http
-
-        imagePullPolicy: Always  
+        - name: engli3m-api
+          image: 380794909589.dkr.ecr.eu-north-1.amazonaws.com/engli3m-api:v1
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              name: http
+          envFrom:
+            - secretRef:
+                name: engli3m-database-secret
+            - secretRef:
+                name: engli3m-jwt-secret
+            - configMapRef:
+                name: engli3m-config
