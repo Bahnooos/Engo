@@ -2,21 +2,57 @@
 
 Cloud infrastructure and CI/CD automation for deploying a containerized **.NET 9 Web API** to **Amazon EKS** using Docker, Amazon ECR, Kubernetes, Terraform, and GitHub Actions.
 
-The project demonstrates an end-to-end deployment workflow, from source code changes to automated container builds and Kubernetes deployments on AWS.
+This project demonstrates an end-to-end deployment workflow, from source code changes to automated container builds and Kubernetes deployments on AWS.
 
 ## Architecture
 
+The infrastructure is provisioned using Terraform, while GitHub Actions automates the application build, container publishing, and Kubernetes deployment.
+
 ```mermaid
-flowchart TD
-    A[Developer] -->|Push to main| B[GitHub Repository]
-    B --> C[GitHub Actions]
-    C --> D[Build Docker Image]
-    D --> E[Amazon ECR]
-    E --> F[Amazon EKS]
-    F --> G[Kubernetes Deployment]
-    G --> H[3 API Replicas]
-    H --> I[ClusterIP Service]
-    G --> J[Amazon RDS]
+flowchart TB
+    DEV["Developer"] -->|"Push to main"| GH["GitHub Repository"]
+
+    TF["Terraform<br/>Reusable Modules"] --> VPC["AWS VPC & Networking"]
+    TF --> EKS["Amazon EKS"]
+    TF --> ECR["Amazon ECR"]
+    TF --> RDS["Amazon RDS<br/>SQL Server"]
+
+    subgraph CICD["CI/CD — GitHub Actions"]
+        GH --> GA["GitHub Actions Workflow"]
+        GA --> BUILD["Build .NET 9 API"]
+        BUILD --> DOCKER["Build Docker Image"]
+        DOCKER --> TAG["Tag with Git Commit SHA"]
+        TAG --> PUSH["Push Image to ECR"]
+    end
+
+    PUSH --> ECR
+
+    GA -->|"Update Deployment<br/>using kubectl"| DEP
+
+    subgraph AWS["AWS Cloud — eu-north-1"]
+        subgraph K8S["Amazon EKS Cluster"]
+            DEP["Kubernetes Deployment"]
+            P1["API Pod 1"]
+            P2["API Pod 2"]
+            P3["API Pod 3"]
+            SVC["ClusterIP Service"]
+
+            DEP --> P1
+            DEP --> P2
+            DEP --> P3
+
+            SVC --> P1
+            SVC --> P2
+            SVC --> P3
+        end
+
+        P1 --> RDS
+        P2 --> RDS
+        P3 --> RDS
+    end
+
+    ECR -.->|"Worker nodes pull image"| DEP
+    GA -.->|"AWS IAM + Kubernetes RBAC"| DEP
 ```
 
 ## Tech Stack
@@ -38,12 +74,12 @@ flowchart TD
 
 ### 1. AWS Infrastructure
 
-- Provisioned AWS infrastructure for the application.
+- Provisioned AWS infrastructure using Terraform.
 - Organized Terraform configuration into reusable modules.
 - Configured networking resources, including VPCs and subnets.
 - Integrated Amazon ECR for container image storage.
-- Deployed an Amazon EKS cluster to run the application.
-- Configured Amazon RDS for database hosting.
+- Deployed an Amazon EKS cluster with a Managed Node Group.
+- Configured Amazon RDS for SQL Server database hosting.
 
 ### 2. Docker Containerization
 
@@ -58,7 +94,7 @@ Implemented an automated deployment pipeline triggered by pushes to the `main` b
 
 Pipeline workflow:
 
-1. Checkout the source code.
+1. Check out the source code.
 2. Configure AWS credentials.
 3. Authenticate with Amazon ECR.
 4. Build the Docker image.
@@ -71,7 +107,7 @@ Pipeline workflow:
 ### 4. Kubernetes Deployment
 
 - Deployed the .NET API to Amazon EKS.
-- Configured Kubernetes Deployments with three replicas.
+- Configured a Kubernetes Deployment with three replicas.
 - Used ClusterIP Services for internal application communication.
 - Managed application configuration through ConfigMaps.
 - Stored sensitive application settings in Kubernetes Secrets.
@@ -96,22 +132,25 @@ Git Push
 GitHub Actions
    |
    v
-Docker Build
+Build .NET 9 API
    |
    v
-Amazon ECR
+Build Docker Image
    |
    v
-Amazon EKS
+Tag with Git Commit SHA
    |
    v
-Kubernetes Deployment Update
+Push to Amazon ECR
    |
    v
-Rollout Verification
+Update Amazon EKS Deployment
+   |
+   v
+Kubernetes Rollout Verification
 ```
 
-Images are tagged with the Git commit SHA to provide unique, immutable deployment versions.
+Images are tagged with the Git commit SHA to identify deployment versions and support traceability.
 
 ## Repository Structure
 
@@ -142,16 +181,21 @@ Engo/
 └── README.md
 ```
 
-## Deployment Verification
+## Deployment Verification & Results
 
 The deployment was successfully verified on Amazon EKS.
 
-**Deployment status:**
+**Verified deployment results:**
 
-- Kubernetes Deployment: Successfully rolled out.
-- Desired replicas: 3.
-- Ready replicas: 3.
-- Pod restarts: 0 at verification time.
+| Metric | Result |
+|---|---|
+| End-to-end deployment time | 58 seconds |
+| Desired replicas | 3 |
+| Ready replicas | 3 |
+| Pod restarts | 0 at verification time |
+| Deployment status | Successfully rolled out |
+
+The 58-second measurement represents the deployment duration from workflow execution until the application Pods became ready.
 
 Verification commands:
 
@@ -192,10 +236,13 @@ Through this project, I gained practical experience with:
 - Managing container images with Amazon ECR.
 - Configuring IAM permissions and Kubernetes RBAC.
 - Troubleshooting Docker builds, ECR permissions, and Kubernetes deployments.
+- Verifying automated deployments and Kubernetes rollout status.
 
 ## Project Status
 
-**Successfully deployed to AWS EKS with an automated GitHub Actions CI/CD pipeline.**
+**Successfully deployed and verified on Amazon EKS using an automated GitHub Actions CI/CD pipeline.**
+
+The AWS infrastructure was subsequently decommissioned to avoid ongoing cloud costs. The source code and deployment configuration remain available for review.
 
 ---
 
