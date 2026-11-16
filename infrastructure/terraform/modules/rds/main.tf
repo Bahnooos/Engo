@@ -73,7 +73,4 @@ resource "aws_db_instance" "main" {
     Project     = "Engli3m"
   }
 
-  lifecycle {
-    prevent_destroy = true
-  }
 }

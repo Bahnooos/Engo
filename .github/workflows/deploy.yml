@@ -4,7 +4,16 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'Engli3m/**'
+      - 'Engli3m.Application/**'
+      - 'Engli3m.Domain/**'
+      - 'Engli3m.Infrastructure/**'
+      - 'infrastructure/**'
+      - '.github/workflows/deploy.yml'  
+      
   workflow_dispatch:
+    
 
 env:
   AWS_REGION: eu-north-1
